@@ -1,0 +1,3 @@
+[submodule "src/DHT-sensor-library"]
+	path = src/DHT-sensor-library
+	url = https://github.com/freetronics/DHT-sensor-library
