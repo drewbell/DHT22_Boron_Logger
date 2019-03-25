@@ -1,18 +1,45 @@
 /*
  * Project DHT22_Logger
- * Description:
- * Author:
+ * Description: Reads data from Freetronics HUMID temp and humidity sensor and
+ * prints data to serial.
+ * Author: Drew Bell
  * Date:
  */
 
-// setup() runs once, when the device is first turned on.
-void setup() {
-  // Put initialization like pinMode and begin functions here.
+ #include "DHT-sensor-library/DHT.h"
 
-}
+ #define DHTPIN D2     // what pin we're connected to
 
-// loop() runs over and over again, as quickly as it can execute.
-void loop() {
-  // The core of your code will likely live here.
+ // Uncomment whatever type you're using!
+ #define DHTTYPE DHT11   // DHT 11
+ // #define DHTTYPE DHT22   // DHT 22  (AM2302)
+ //#define DHTTYPE DHT21   // DHT 21 (AM2301)
 
-}
+ DHT dht(DHTPIN, DHTTYPE);
+
+ void setup() {
+   Serial.begin(9600);
+   Serial.println("DHT test");
+
+   dht.begin();
+ }
+
+ void loop() {
+   // Reading temperature or humidity takes about 250 milliseconds!
+   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+   float h = dht.readHumidity();
+   float t = dht.readTemperature();
+
+   // check if returns are valid, if they are NaN (not a number) then something went wrong!
+   if (isnan(t) || isnan(h)) {
+     Serial.println("Failed to read from DHT");
+   } else {
+     Serial.print("Humidity: ");
+     Serial.print(h);
+     Serial.print(" %\t");
+     Serial.print("Temperature: ");
+     Serial.print(t);
+     Serial.println(" *C");
+   }
+   delay(2000);
+ }
