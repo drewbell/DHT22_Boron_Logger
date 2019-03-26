@@ -228,23 +228,14 @@ void printSensorData(class PietteTech_DHT *_d) {
   printEdgeTiming(_d);
 #endif
 
-  Serial.print("Humidity (%): ");
-  Serial.println(_d->getHumidity(), 2);
-
-  Serial.print("Temperature (oC): ");
-  Serial.println(_d->getCelsius(), 2);
-
   Serial.print("Temperature (oF): ");
   Serial.println(_d->getFahrenheit(), 2);
 
-  Serial.print("Temperature (K): ");
-  Serial.println(_d->getKelvin(), 2);
+  Serial.print("Humidity (%): ");
+  Serial.println(_d->getHumidity(), 2);
 
-  Serial.print("Dew Point (oC): ");
-  Serial.println(_d->getDewPoint());
-
-  Serial.print("Dew Point Slow (oC): ");
-  Serial.println(_d->getDewPointSlow());
+  Serial.print("Dew Point (F): ");
+  Serial.println(_d->getDewPoint() * 9 / 5 + 32);
 }
 
 void loop()
