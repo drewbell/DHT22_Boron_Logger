@@ -31,3 +31,9 @@
 *.out
 *.app
 *.bin
+
+# IDE Files 
+*.vscode
+
+# Folders
+Lib/
