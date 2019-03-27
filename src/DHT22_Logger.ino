@@ -42,14 +42,21 @@
 #include "PietteTech_DHT.h"
 
 #define DHTTYPEA  DHT11       // Sensor type DHT11/21/22/AM2301/AM2302
-#define DHTPINA   D4          // Digital pin for comunications
+#define DHTPINA   D2          // Digital pin for comunications
 #define DHTTYPEB  DHT11       // Sensor type DHT11/21/22/AM2301/AM2302
-#define DHTPINB   D2          // Digital pin for comunications
+#define DHTPINB   D3          // Digital pin for comunications
 
 // Instantiate two class objects
 PietteTech_DHT DHTA(DHTPINA, DHTTYPEA);
 PietteTech_DHT DHTB(DHTPINB, DHTTYPEB);
 int n;      // counter
+
+// cloud publish vars
+bool cloudPub = false;
+String lastTempF = "";
+String lastRH = "";
+String lastDP = "";
+String lastMeasureTime = "";
 
 #define LOOP_DELAY 5000 // 5s intervals
 int _sensorA_error_count;
@@ -57,14 +64,21 @@ int _sensorB_error_count;
 int _spark_error_count;
 unsigned long _lastTimeInLoop;
 
+int cloudPrint(String ignored){
+  cloudPub = true;
+}
+
 void setup()
 {
   Serial.begin(9600);
-  while (!Serial.available() && millis() < 30000) {
+  while (!Serial.available() && millis() < 5000){
     Serial.println("Press any key to start.");
     Particle.process();
     delay(1000);
   }
+
+  bool success = Particle.function("pubData", cloudPrint);
+
   Serial.println("DHT 2 Sensor program using DHT.acquire and DHT.aquiring");
   Serial.print("LIB version: ");
   Serial.println(DHTLIB_VERSION);
@@ -92,6 +106,21 @@ void printEdgeTiming(class PietteTech_DHT *_d) {
   Serial.print("\n\r");
 }
 #endif
+
+
+void publishToCloud(void){
+  static unsigned lastTime = 0;
+  unsigned now = millis();
+  if( cloudPub || (now - lastTime) >= 30 * 60 * 1000 || !lastTime){     //publish every 20 min
+    if(cloudPub) cloudPub = false;
+    lastTime = now;
+    String packet = lastMeasureTime + String("|T=") 
+        + String(lastTempF + String(" degF|RH="))
+        + String(lastRH + String("%|DP="))
+        + String(lastDP + String(";"));
+    bool message_send_status = Particle.publish("R&D", packet, 60, PRIVATE);
+  }
+}
 
 void printSensorData(class PietteTech_DHT *_d) {
   int result = _d->getStatus();
@@ -137,6 +166,19 @@ void printSensorData(class PietteTech_DHT *_d) {
   printEdgeTiming(_d);
 #endif
 
+  if(result == DHTLIB_OK){
+    lastTempF = String(_d->getFahrenheit(), 2);
+    lastRH = String(_d->getHumidity(), 2);
+    lastDP = String(_d->getDewPoint() * 9 / 5 + 32, 2); 
+  } else {
+    lastTempF = "err";
+    lastRH = "err";
+    lastDP = "err";
+  }
+  lastMeasureTime = Time.timeStr();
+  
+  Serial.println("Time: " + lastMeasureTime); 
+  
   Serial.print("Temperature (oF): ");
   Serial.println(_d->getFahrenheit(), 2);
 
@@ -145,6 +187,9 @@ void printSensorData(class PietteTech_DHT *_d) {
 
   Serial.print("Dew Point (F): ");
   Serial.println(_d->getDewPoint() * 9 / 5 + 32);
+
+  publishToCloud();
+
 }
 
 void loop()
